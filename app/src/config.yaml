@@ -1,0 +1,45 @@
+# ============================================================
+# Classification Pipeline Configuration
+# ============================================================
+
+# --- LLM Server Settings ---
+llm:
+  base_url: "http://127.0.0.1:1234/v1"
+  model_name: "qwen3-4b"
+  temperature: 0.0
+  max_tokens: 32
+  enable_thinking: false # Set to false to prepend /no_think
+
+# --- Classification Settings ---
+classification:
+  labels:
+    - "ai"
+    - "non_ai"
+  default_label: "non_ai" # Fallback if model output can't be parsed
+  description_column: "Descrizione"
+
+# --- Prompt Template ---
+# Available placeholders: {description}, {labels}
+prompt:
+  system: |
+    You are a strict binary classifier. Your task is to determine whether a
+    description involves Artificial Intelligence (AI) in any of its forms,
+    including but not limited to: machine learning, deep learning, natural
+    language processing, computer vision, autonomous driving, robotics,
+    big data analytics, neural networks, generative AI, reinforcement learning.
+
+    You MUST respond with EXACTLY one of the following labels: {labels}
+    Do NOT include any other text, explanation, or punctuation.
+  user: |
+    Classify the following description:
+    "{description}"
+
+# --- I/O Paths (relative to project root) ---
+paths:
+  input_dir: "app/data"
+  output_dir: "app/out"
+
+# --- Concurrency ---
+concurrency:
+  max_workers: 10 # Max parallel requests to LM Studio
+  batch_log_interval: 100 # Log progress every N items
