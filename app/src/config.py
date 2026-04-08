@@ -16,8 +16,8 @@ import yaml
 class LLMConfig:
     """LLM server connection and generation settings."""
 
-    base_url: str = "http://127.0.0.1:1234/v1"
-    model_name: str = "qwen3-4b"
+    base_url: str = "http://vllm:8000/v1"
+    model_name: str = "Qwen/Qwen-3.5-4B-Instruct"
     temperature: float = 0.0
     max_tokens: int = 32
     enable_thinking: bool = True
@@ -27,8 +27,17 @@ class LLMConfig:
 class ClassificationConfig:
     """Classification task settings (labels, column, prompt)."""
 
-    labels: list[str] = field(default_factory=lambda: ["ai", "non_ai"])
-    default_label: str = "non_ai"
+    labels: list[str] = field(default_factory=lambda: [
+        "Autonomous driving",
+        "Healthcare AI",
+        "Robotics AI",
+        "Research",
+        "Data Science",
+        "Virtual assistants",
+        "Fintech",
+        "Enterprise AI",
+    ])
+    default_label: str = "Research"
     description_column: str = "Descrizione"
 
 

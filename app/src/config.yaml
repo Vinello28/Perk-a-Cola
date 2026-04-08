@@ -4,8 +4,8 @@
 
 # --- LLM Server Settings ---
 llm:
-  base_url: "http://127.0.0.1:1234/v1"
-  model_name: "ministral-3-3b"
+  base_url: "http://vllm:8000/v1"
+  model_name: "Qwen/Qwen-3.5-4B-Instruct"
   temperature: 0.0
   max_tokens: 32
   enable_thinking: false # Set to false to prepend /no_think
@@ -13,20 +13,31 @@ llm:
 # --- Classification Settings ---
 classification:
   labels:
-    - "ai"
-    - "non_ai"
-  default_label: "non_ai" # Fallback if model output can't be parsed
+    - "Autonomous driving"
+    - "Healthcare AI"
+    - "Robotics AI"
+    - "Research"
+    - "Data Science"
+    - "Virtual assistants"
+    - "Fintech"
+    - "Enterprise AI"
+  default_label: "Research" # Fallback if model output can't be parsed
   description_column: "Descrizione"
 
 # --- Prompt Template ---
 # Available placeholders: {description}, {labels}
 prompt:
   system: |
-    You are a strict binary classifier. Your task is to determine whether a
-    description involves Artificial Intelligence (AI) in any of its forms,
-    including but not limited to: machine learning, deep learning, natural
-    language processing, computer vision, autonomous driving, robotics,
-    big data analytics, neural networks, generative AI, reinforcement learning.
+    You are a strict text classifier. Your task is to determine which of the 8 categories best fits the provided description.
+    Categories:
+    1. "Autonomous driving": guida autonoma, sistemi ADAS, sensori LiDAR per veicoli, algoritmi di routing per auto a guida autonoma.
+    2. "Healthcare AI": diagnostica assistita, AI per imaging medico (RX, Risonanze), scoperta di nuovi farmaci (drug discovery), monitoraggio biometrico.
+    3. "Robotics AI": robotica fisica, bracci industriali, droni e UAV, automazione di fabbrica, manutenzione predittiva hardware/sensori.
+    4. "Research": ricerca teorica, implementazione di nuovi algoritmi (es. nuove architetture transformer), paper accademici, ottimizzazione matematica pura.
+    5. "Data Science": gestione di Big Data, pipeline ETL, modelli NLP generici, analisi statistica, data mining per insight.
+    6. "Virtual assistants": chatbot (es. RASA, Dialogflow), agenti conversazionali basati su LLM, assistenti vocali per customer service.
+    7. "Fintech": trading algoritmico, rilevamento frodi bancarie, credit scoring, automazione finanziaria, robo-advising.
+    8. "Enterprise AI": AI per processi interni aziendali, HR tech, ottimizzazione della supply chain, integrazioni AI nei CRM o ERP.
 
     You MUST respond with EXACTLY one of the following labels: {labels}
     Do NOT include any other text, explanation, or punctuation.
