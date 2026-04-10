@@ -9,11 +9,11 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     depends_on:
-      vllm:
-        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
 
-  vllm:
-    image: vllm/vllm-openai:latest
+  ollama:
+    image: ollama/ollama:latest
     deploy:
       resources:
         reservations:
@@ -22,13 +22,25 @@ services:
               count: all
               capabilities: [gpu]
     ports:
-      - "8000:8000"
-    command: ["--model", "Qwen/Qwen-3.5-4B-Instruct", "--quantization", "fp8", "--max-model-len", "4096", "--dtype", "auto"]
-    # Shared memory to help prevent crashes on large tensors
-    shm_size: '4gb'
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 10s
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    entrypoint: ["ollama", "pull", "qwen3:4b"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  ollama_data:

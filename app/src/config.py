@@ -16,8 +16,8 @@ import yaml
 class LLMConfig:
     """LLM server connection and generation settings."""
 
-    base_url: str = "http://vllm:8000/v1"
-    model_name: str = "Qwen/Qwen-3.5-4B-Instruct"
+    base_url: str = "http://ollama:11434/v1"
+    model_name: str = "qwen3:4b"
     temperature: float = 0.0
     max_tokens: int = 32
     enable_thinking: bool = True
