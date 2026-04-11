@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+    ports:
+      - "8501:8501"
+    command: ["streamlit", "run", "app/src/gui.py"]
     volumes:
       - ./app/data:/app/app/data
       - ./app/out:/app/app/out
@@ -26,15 +29,15 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
 
   ollama-pull:
     image: ollama/ollama:latest
-    entrypoint: ["ollama", "pull", "qwen3:4b"]
+    entrypoint: ["ollama", "pull", "qwen3.5:4b"]
     environment:
       - OLLAMA_HOST=http://ollama:11434
     depends_on:

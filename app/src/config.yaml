@@ -5,9 +5,9 @@
 # --- LLM Server Settings ---
 llm:
   base_url: "http://ollama:11434/v1"
-  model_name: "qwen3:4b"
+  model_name: "qwen3.5:4b"
   temperature: 0.0
-  max_tokens: 32
+  max_tokens: 4096
   enable_thinking: false # Set to false to prepend /no_think
 
 # --- Classification Settings ---
@@ -21,7 +21,7 @@ classification:
     - "Virtual assistants"
     - "Fintech"
     - "Enterprise AI"
-  default_label: "Research" # Fallback if model output can't be parsed
+  default_label: "PARSING_ERROR" # Fallback if model output can't be parsed
   description_column: "Descrizione"
 
 # --- Prompt Template ---
@@ -52,5 +52,5 @@ paths:
 
 # --- Concurrency ---
 concurrency:
-  max_workers: 4 # Max parallel requests to LM Studio
+  max_workers: 1 # Max parallel requests to LM Studio
   batch_log_interval: 100 # Log progress every N items
