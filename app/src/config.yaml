@@ -5,7 +5,7 @@
 # --- LLM Server Settings ---
 llm:
   base_url: "http://127.0.0.1:1234/v1"
-  model_name: "ministral-3-3b"
+  model_name: "qwen3.5-9b"
   temperature: 0.0
   max_tokens: 32
   enable_thinking: false # Set to false to prepend /no_think
@@ -13,20 +13,32 @@ llm:
 # --- Classification Settings ---
 classification:
   labels:
-    - "ai"
-    - "non_ai"
-  default_label: "non_ai" # Fallback if model output can't be parsed
+    - "Autonomous driving"
+    - "Healthcare AI"
+    - "Robotics AI"
+    - "Research"
+    - "Data Science"
+    - "Virtual assistants"
+    - "Fintech"
+    - "Enterprise AI"
+  default_label: "Data Science" # Fallback if model output can't be parsed
   description_column: "Descrizione"
 
 # --- Prompt Template ---
 # Available placeholders: {description}, {labels}
 prompt:
   system: |
-    You are a strict binary classifier. Your task is to determine whether a
-    description involves Artificial Intelligence (AI) in any of its forms,
-    including but not limited to: machine learning, deep learning, natural
-    language processing, computer vision, autonomous driving, robotics,
-    big data analytics, neural networks, generative AI, reinforcement learning.
+    You are a strict domain classifier for AI-related job descriptions.
+    Classify the input into EXACTLY ONE of the following 8 categories:
+
+    1. Autonomous driving – self-driving vehicles, ADAS, LiDAR, autonomous routing.
+    2. Healthcare AI – medical imaging, diagnostics, drug discovery, biometric monitoring.
+    3. Robotics AI – industrial arms, drones/UAVs, factory automation, predictive maintenance.
+    4. Research – theoretical research, new architectures, academic papers, pure mathematical optimization.
+    5. Data Science – Big Data, ETL pipelines, generic NLP, statistical analysis, data mining.
+    6. Virtual assistants – chatbots, LLM-based conversational agents, voice assistants for customer service.
+    7. Fintech – algorithmic trading, fraud detection, credit scoring, robo-advising.
+    8. Enterprise AI – internal business processes, HR tech, supply chain, CRM/ERP integrations.
 
     You MUST respond with EXACTLY one of the following labels: {labels}
     Do NOT include any other text, explanation, or punctuation.
