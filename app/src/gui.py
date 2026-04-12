@@ -9,6 +9,7 @@ Launch with::
 from __future__ import annotations
 
 import asyncio
+import csv
 import io
 import logging
 import tempfile
@@ -47,27 +48,41 @@ logger = logging.getLogger("gui")
 # ── Helpers ──────────────────────────────────────────────────────────
 
 
-def _read_headers(file_bytes: bytes) -> list[str]:
-    """Read column headers from an in-memory Excel file."""
-    wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
-    ws = wb.active
-    headers = [str(cell.value) for cell in next(ws.iter_rows(min_row=1, max_row=1)) if cell.value is not None]
-    wb.close()
-    return headers
+def _read_headers(file_bytes: bytes, file_name: str) -> list[str]:
+    """Read column headers from an in-memory Excel or CSV file."""
+    if file_name.lower().endswith(".csv"):
+        text = file_bytes.decode("utf-8")
+        reader = csv.reader(io.StringIO(text))
+        return next(reader)
+    else:
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
+        ws = wb.active
+        headers = [str(cell.value) for cell in next(ws.iter_rows(min_row=1, max_row=1)) if cell.value is not None]
+        wb.close()
+        return headers
 
 
-def _read_column(file_bytes: bytes, column_name: str) -> list[str]:
-    """Read one column from an in-memory Excel file (skip header)."""
-    wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
-    ws = wb.active
-    headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-    col_idx = headers.index(column_name)
-    descriptions: list[str] = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        value = row[col_idx] if col_idx < len(row) else None
-        descriptions.append(str(value).strip() if value is not None else "")
-    wb.close()
-    return descriptions
+def _read_column(file_bytes: bytes, file_name: str, column_name: str) -> list[str]:
+    """Read one column from an in-memory Excel or CSV file (skip header)."""
+    if file_name.lower().endswith(".csv"):
+        text = file_bytes.decode("utf-8")
+        reader = csv.DictReader(io.StringIO(text))
+        descriptions: list[str] = []
+        for row in reader:
+            value = row.get(column_name, "")
+            descriptions.append(value.strip() if value else "")
+        return descriptions
+    else:
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
+        ws = wb.active
+        headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+        col_idx = headers.index(column_name)
+        descriptions = []
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            value = row[col_idx] if col_idx < len(row) else None
+            descriptions.append(str(value).strip() if value is not None else "")
+        wb.close()
+        return descriptions
 
 
 def _load_raw_yaml() -> dict:
@@ -264,9 +279,9 @@ with st.sidebar:
     # ── File upload ──────────────────────────────────────────────
     st.markdown('<div class="sidebar-section">📂 Input Data</div>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader(
-        "Upload an Excel file (.xlsx)",
-        type=["xlsx"],
-        help="Select the Excel file containing the descriptions to classify.",
+        "Upload a file (.xlsx or .csv)",
+        type=["xlsx", "csv"],
+        help="Select the Excel or CSV file containing the descriptions to classify.",
     )
 
     selected_column: str | None = None
@@ -274,7 +289,7 @@ with st.sidebar:
 
     if uploaded_file is not None:
         file_bytes = uploaded_file.getvalue()
-        headers = _read_headers(file_bytes)
+        headers = _read_headers(file_bytes, uploaded_file.name)
         selected_column = st.selectbox(
             "Select the column to classify",
             options=headers,
@@ -331,20 +346,23 @@ if uploaded_file is None:
     st.markdown("""
     <div style="text-align: center; padding: 4rem 0; color: rgba(255,255,255,0.4);">
         <p style="font-size: 3rem; margin-bottom: 0.5rem;">📂</p>
-        <p style="font-size: 1.1rem;">Carica un file Excel dalla sidebar per iniziare</p>
+        <p style="font-size: 1.1rem;">Carica un file Excel o CSV dalla sidebar per iniziare</p>
     </div>
     """, unsafe_allow_html=True)
 
 elif not run_button and "results_df" not in st.session_state:
     # File uploaded but not running yet – show preview
     st.subheader("📋 Anteprima del file")
-    preview_df = pd.read_excel(io.BytesIO(file_bytes), engine="openpyxl")
+    if uploaded_file.name.lower().endswith(".csv"):
+        preview_df = pd.read_csv(io.BytesIO(file_bytes))
+    else:
+        preview_df = pd.read_excel(io.BytesIO(file_bytes), engine="openpyxl")
     st.dataframe(preview_df.head(20), use_container_width=True, height=400)
     st.caption(f"Mostrando le prime 20 righe di **{len(preview_df)}** totali · Colonna selezionata: **{selected_column}**")
 
 elif run_button:
     # ── Classification run ───────────────────────────────────────
-    descriptions = _read_column(file_bytes, selected_column)
+    descriptions = _read_column(file_bytes, uploaded_file.name, selected_column)
     total = len(descriptions)
 
     st.markdown(f"""
@@ -466,20 +484,33 @@ elif run_button:
 
         st.dataframe(results_df, use_container_width=True, height=400)
 
-        # Download button
-        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+        # Download button — match input format
+        is_csv = uploaded_file.name.lower().endswith(".csv")
+        out_suffix = ".csv" if is_csv else ".xlsx"
+        with tempfile.NamedTemporaryFile(suffix=out_suffix, delete=False) as tmp:
             tmp_path = Path(tmp.name)
             write_results(descriptions, labels, tmp_path)
-            excel_bytes = tmp_path.read_bytes()
+            result_bytes = tmp_path.read_bytes()
 
-        st.download_button(
-            label="⬇️  Scarica risultati (.xlsx)",
-            data=excel_bytes,
-            file_name=f"{uploaded_file.name.replace('.xlsx', '')}_classificata.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            type="primary",
-            use_container_width=True,
-        )
+        stem = Path(uploaded_file.name).stem
+        if is_csv:
+            st.download_button(
+                label="⬇️  Scarica risultati (.csv)",
+                data=result_bytes,
+                file_name=f"{stem}_classificata.csv",
+                mime="text/csv",
+                type="primary",
+                use_container_width=True,
+            )
+        else:
+            st.download_button(
+                label="⬇️  Scarica risultati (.xlsx)",
+                data=result_bytes,
+                file_name=f"{stem}_classificata.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                type="primary",
+                use_container_width=True,
+            )
 
 # Show previous results if available
 elif "results_df" in st.session_state:

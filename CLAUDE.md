@@ -27,8 +27,8 @@ streamlit run app/src/gui.py
 
 The pipeline has two entry points that share the same core modules:
 
-- **`main.py`** — CLI orchestrator. Discovers `.xlsx` files in `app/data/`, runs async batch classification, writes results to `app/out/`.
-- **`gui.py`** — Streamlit web UI. Accepts file uploads, lets users edit the system prompt inline, polls a background thread for progress updates, and offers a download button for results.
+- **`main.py`** — CLI orchestrator. Discovers `.xlsx` and `.csv` files in `app/data/`, runs async batch classification, writes results to `app/out/` (preserving input format).
+- **`gui.py`** — Streamlit web UI. Accepts `.xlsx` or `.csv` file uploads, lets users edit the system prompt inline, polls a background thread for progress updates, and offers a download button for results in the same format as the input.
 
 Core modules:
 
@@ -36,8 +36,8 @@ Core modules:
 |---|---|
 | `config.py` | Loads `config.yaml` into frozen dataclasses (`PipelineConfig`, `LLMConfig`, etc.). Unknown YAML keys are silently ignored. |
 | `classifier.py` | `BaseClassifier` (Strategy ABC) + `LMStudioClassifier` (async, OpenAI-compatible). Uses `asyncio.Semaphore` to cap concurrent requests. Strips `<think>…</think>` blocks before regex-matching labels. |
-| `data_reader.py` | Reads the target column from `.xlsx` files via `openpyxl`. |
-| `output_writer.py` | Writes description + label pairs back to `.xlsx`. |
+| `data_reader.py` | Reads the target column from `.xlsx` or `.csv` files. Routes to `_read_descriptions_xlsx` or `_read_descriptions_csv` based on file extension. |
+| `output_writer.py` | Writes description + label pairs to `.xlsx` or `.csv`. Routes to `_write_results_xlsx` or `_write_results_csv` based on output path extension. |
 
 ## Configuration (`app/src/config.yaml`)
 
@@ -54,6 +54,13 @@ The GUI reads this file at startup for display and uses the system prompt from i
 ## Prerequisites
 
 LM Studio must be running on `http://127.0.0.1:1234` with a model loaded before invoking either entry point. The `api_key` sent is the literal string `"lm-studio"` (ignored by LM Studio).
+
+## Supported File Formats
+
+Both CLI and GUI support `.xlsx` (Excel) and `.csv` (CSV) files:
+- **Input**: Place `.xlsx` or `.csv` files in `app/data/` (CLI) or upload via the GUI
+- **Output**: Results are written in the same format as the input (CSV in → CSV out, XLSX in → XLSX out)
+- **Column selection**: Both formats support arbitrary column names; the pipeline reads the configured `description_column` from the file header
 
 
 ## Workflow Orchestration

@@ -52,13 +52,15 @@ async def run_pipeline(config_path: str | None = None) -> None:
     logger.info("  Output dir   : %s", output_dir)
 
     # 2. Discover input files
-    xlsx_files = sorted(input_dir.glob("*.xlsx"))
-    if not xlsx_files:
-        logger.error("No .xlsx files found in %s", input_dir)
+    input_files = sorted(
+        f for f in input_dir.iterdir() if f.suffix.lower() in (".xlsx", ".csv")
+    )
+    if not input_files:
+        logger.error("No .xlsx or .csv files found in %s", input_dir)
         sys.exit(1)
 
-    logger.info("Found %d input file(s): %s", len(xlsx_files),
-                [f.name for f in xlsx_files])
+    logger.info("Found %d input file(s): %s", len(input_files),
+                [f.name for f in input_files])
 
     # 3. Build classifier
     classifier = LMStudioClassifier(
@@ -69,13 +71,13 @@ async def run_pipeline(config_path: str | None = None) -> None:
     )
 
     # 4. Process each file
-    for xlsx_path in xlsx_files:
+    for file_path in input_files:
         logger.info("━" * 60)
-        logger.info("Processing: %s", xlsx_path.name)
+        logger.info("Processing: %s", file_path.name)
 
         # Read
         descriptions = read_descriptions(
-            xlsx_path, cfg.classification.description_column
+            file_path, cfg.classification.description_column
         )
 
         if not descriptions:
@@ -95,7 +97,7 @@ async def run_pipeline(config_path: str | None = None) -> None:
         )
 
         # Write output
-        out_name = f"{xlsx_path.stem}_classified.xlsx"
+        out_name = f"{file_path.stem}_classified{file_path.suffix}"
         out_path = output_dir / out_name
         write_results(descriptions, labels, out_path)
 

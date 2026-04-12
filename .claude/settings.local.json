@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m py_compile app/src/data_reader.py)",
+      "Bash(python -m py_compile app/src/output_writer.py)",
+      "Bash(python -m py_compile app/src/main.py)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/src/gui.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK: gui'\\)\")",
+      "Bash(python)"
+    ]
+  }
+}
