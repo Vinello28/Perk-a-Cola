@@ -60,16 +60,40 @@ Customize the classification behavior in `app/src/config.yaml`:
 
 ```yaml
 llm:
-  model_name: "qwen3-4b"
+  model_name: "ministral-3-3b"
   enable_thinking: true  # Utilize model's reasoning capabilities
 
 classification:
-  labels: ["ai", "non_ai"]
+  labels:
+    - "Autonomous Driving and UVs"
+    - "Healthcare AI"
+    - "Robotics and Industry"
+    - "Research"
+    - "Virtual assistants"
+    - "Fintech and Marketing"
+    - "Enterprise AI"
+    - "Environmental AI"
+    - "Generic use"
+  default_label: "Generic use"
   description_column: "Descrizione"
 
 concurrency:
-  max_workers: 10  # Adjust based on your VRAM/System specs
+  max_workers: 4  # Adjust based on your VRAM/System specs
 ```
+
+### Classification Categories
+
+The system classifies AI-related project descriptions into 9 categories:
+
+1. **Autonomous Driving and UVs** – Self-driving vehicles, ADAS, LiDAR, autonomous routing, unmanned vehicles (ground, aerial, marine)
+2. **Healthcare AI** – Medical imaging, diagnostics, drug discovery, biometric monitoring
+3. **Robotics and Industry** – Autonomous robots, LLM-powered robotic systems, industrial computer vision, factory automation, predictive maintenance
+4. **Research** – Theoretical research, new architectures, academic papers, mathematical optimization
+5. **Virtual assistants** – Chatbots, LLM-based conversational agents, voice assistants
+6. **Fintech and Marketing** – Algorithmic trading, fraud detection, credit scoring, AI-generated advertising, GenAI marketing campaigns
+7. **Enterprise AI** – Internal business processes, HR tech, supply chain, CRM/ERP integrations
+8. **Environmental AI** – Environmental monitoring, pollution analysis, IoT data analysis
+9. **Generic use** – AI applications that don't fit other categories
 
 ## Usage
 

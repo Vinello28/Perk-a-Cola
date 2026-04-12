@@ -5,7 +5,8 @@
       "Bash(python -m py_compile app/src/output_writer.py)",
       "Bash(python -m py_compile app/src/main.py)",
       "Bash(python -c \"import ast; ast.parse\\(open\\('app/src/gui.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK: gui'\\)\")",
-      "Bash(python)"
+      "Bash(python)",
+      "Bash(grep -rn \"Fintech\\\\|Autonomous driving\\\\|Healthcare AI\\\\|Robotics AI\\\\|Research\\\\|Data Science\\\\|Virtual assistants\\\\|Enterprise AI\\\\|Environmental AI\" *.py)"
     ]
   }
 }
