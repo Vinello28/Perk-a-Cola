@@ -32,7 +32,10 @@ def _read_descriptions_xlsx(file_path: Path, column_name: str) -> list[str]:
     descriptions: list[str] = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         value = row[col_idx] if col_idx < len(row) else None
-        descriptions.append(str(value).strip() if value is not None else "")
+        if value is not None:
+            clean_val = str(value).strip()
+            if clean_val and clean_val.lower() not in ("none", "null", "nan"):
+                descriptions.append(clean_val)
 
     wb.close()
     return descriptions
@@ -50,8 +53,11 @@ def _read_descriptions_csv(file_path: Path, column_name: str) -> list[str]:
             )
         descriptions: list[str] = []
         for row in reader:
-            value = row[column_name]
-            descriptions.append(value.strip() if value else "")
+            value = row.get(column_name)
+            if value is not None:
+                clean_val = value.strip()
+                if clean_val and clean_val.lower() not in ("none", "null", "nan"):
+                    descriptions.append(clean_val)
     return descriptions
 
 

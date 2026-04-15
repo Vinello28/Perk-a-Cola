@@ -30,7 +30,6 @@ from config import (
     PromptConfig,
     load_config,
 )
-from output_writer import write_results
 
 # ── Constants ────────────────────────────────────────────────────────
 
@@ -62,27 +61,39 @@ def _read_headers(file_bytes: bytes, file_name: str) -> list[str]:
         return headers
 
 
-def _read_column(file_bytes: bytes, file_name: str, column_name: str) -> list[str]:
-    """Read one column from an in-memory Excel or CSV file (skip header)."""
+def _read_selected_data(file_bytes: bytes, file_name: str, primary_col: str, extra_cols: list[str]) -> dict[str, list[str]]:
+    """Read specific columns from an in-memory Excel or CSV file (skip header)."""
+    all_cols = [primary_col] + extra_cols
+    data: dict[str, list[str]] = {c: [] for c in all_cols}
     if file_name.lower().endswith(".csv"):
         text = file_bytes.decode("utf-8")
         reader = csv.DictReader(io.StringIO(text))
-        descriptions: list[str] = []
         for row in reader:
-            value = row.get(column_name, "")
-            descriptions.append(value.strip() if value else "")
-        return descriptions
+            val_primary = row.get(primary_col, "")
+            val_primary_clean = val_primary.strip() if val_primary else ""
+            if val_primary_clean and val_primary_clean.lower() not in ("none", "null", "nan"):
+                data[primary_col].append(val_primary_clean)
+                for c in extra_cols:
+                    val = row.get(c, "")
+                    data[c].append(val.strip() if val else "")
+        return data
     else:
         wb = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
         ws = wb.active
-        headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-        col_idx = headers.index(column_name)
-        descriptions = []
+        headers = [str(cell.value) for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+        col_idx = {c: headers.index(c) for c in all_cols if c in headers}
         for row in ws.iter_rows(min_row=2, values_only=True):
-            value = row[col_idx] if col_idx < len(row) else None
-            descriptions.append(str(value).strip() if value is not None else "")
+            idx_primary = col_idx.get(primary_col, -1)
+            val_primary = row[idx_primary] if 0 <= idx_primary < len(row) else None
+            val_primary_clean = str(val_primary).strip() if val_primary is not None else ""
+            if val_primary_clean and val_primary_clean.lower() not in ("none", "null", "nan"):
+                data[primary_col].append(val_primary_clean)
+                for c in extra_cols:
+                    idx = col_idx.get(c, -1)
+                    val = row[idx] if 0 <= idx < len(row) else None
+                    data[c].append(str(val).strip() if val is not None else "")
         wb.close()
-        return descriptions
+        return data
 
 
 def _load_raw_yaml() -> dict:
@@ -285,6 +296,7 @@ with st.sidebar:
     )
 
     selected_column: str | None = None
+    columns_to_keep: list[str] = []
     headers: list[str] = []
 
     if uploaded_file is not None:
@@ -298,6 +310,15 @@ with st.sidebar:
             else 0,
             help="Choose which column contains the text descriptions.",
         )
+        
+        other_columns = [h for h in headers if h != selected_column]
+        if other_columns:
+            columns_to_keep = st.multiselect(
+                "Select additional columns to keep",
+                options=other_columns,
+                default=[],
+                help="Extra columns to include in the final classification output file.",
+            )
 
     # ── System prompt ────────────────────────────────────────────
     st.markdown('<div class="sidebar-section">💬 System Prompt</div>', unsafe_allow_html=True)
@@ -362,7 +383,8 @@ elif not run_button and "results_df" not in st.session_state:
 
 elif run_button:
     # ── Classification run ───────────────────────────────────────
-    descriptions = _read_column(file_bytes, uploaded_file.name, selected_column)
+    extracted_data = _read_selected_data(file_bytes, uploaded_file.name, selected_column, columns_to_keep)
+    descriptions = extracted_data[selected_column]
     total = len(descriptions)
 
     st.markdown(f"""
@@ -465,7 +487,13 @@ elif run_button:
         """, unsafe_allow_html=True)
 
         # Build results DataFrame
-        results_df = pd.DataFrame({"Descrizione": descriptions, "Label": labels})
+        df_cols = {}
+        df_cols[selected_column] = descriptions
+        for col in columns_to_keep:
+            df_cols[col] = extracted_data[col]
+        df_cols["Label"] = labels
+        
+        results_df = pd.DataFrame(df_cols)
         st.session_state["results_df"] = results_df
 
         # Results table
@@ -489,7 +517,10 @@ elif run_button:
         out_suffix = ".csv" if is_csv else ".xlsx"
         with tempfile.NamedTemporaryFile(suffix=out_suffix, delete=False) as tmp:
             tmp_path = Path(tmp.name)
-            write_results(descriptions, labels, tmp_path)
+            if is_csv:
+                results_df.to_csv(tmp_path, index=False)
+            else:
+                results_df.to_excel(tmp_path, index=False, engine="openpyxl")
             result_bytes = tmp_path.read_bytes()
 
         stem = Path(uploaded_file.name).stem

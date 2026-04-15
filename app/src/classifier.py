@@ -93,7 +93,9 @@ class LMStudioClassifier(BaseClassifier):
 
     async def classify(self, description: str) -> str:
         """Send one description to the LLM and return the parsed label."""
-        user_content = self._user_template.format(description=description)
+        # Truncate description to 512 characters as requested
+        truncated_desc = description[:512]
+        user_content = self._user_template.format(description=truncated_desc)
 
         # Prepend /no_think directive if thinking is disabled
         if not self._enable_thinking:
