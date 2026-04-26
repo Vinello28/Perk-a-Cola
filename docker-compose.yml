@@ -1,0 +1,15 @@
+services:
+  perk-a-cola:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app/data:/app/app/data
+      - ./app/out:/app/app/out
+    environment:
+      # Use host.docker.internal to reach LM Studio on the host machine.
+      # This works natively on Docker Desktop (Mac/Windows).
+      - LLM_API_BASE=http://host.docker.internal:1234/v1
+    # For Linux users, uncomment the following lines to enable host.docker.internal
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"

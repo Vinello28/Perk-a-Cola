@@ -69,6 +69,8 @@ class PipelineConfig:
     concurrency: ConcurrencyConfig = field(default_factory=ConcurrencyConfig)
 
 
+import os
+
 def _build_sub_config(cls: type, raw: dict[str, Any] | None):
     """Build a dataclass instance from a raw dict, ignoring unknown keys."""
     if raw is None:
@@ -103,6 +105,12 @@ def load_config(config_path: str | Path | None = None) -> PipelineConfig:
 
     with open(config_path, "r", encoding="utf-8") as fh:
         raw: dict[str, Any] = yaml.safe_load(fh) or {}
+
+    # Override LLM base URL with environment variable if present
+    llm_raw = raw.get("llm", {})
+    if "LLM_API_BASE" in os.environ:
+        llm_raw["base_url"] = os.environ["LLM_API_BASE"]
+        raw["llm"] = llm_raw
 
     return PipelineConfig(
         llm=_build_sub_config(LLMConfig, raw.get("llm")),

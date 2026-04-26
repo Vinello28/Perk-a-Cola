@@ -71,7 +71,22 @@ concurrency:
   max_workers: 10  # Adjust based on your VRAM/System specs
 ```
 
-## Usage
+## Running with Docker (Recommended)
+
+The easiest way to run the application (both GUI and CLI) without dealing with Python environments is using Docker Compose.
+
+1. **Start LM Studio**: Load your model and start the server on port `1234`.
+2. **Run the GUI**:
+   ```bash
+   docker-compose up --build
+   ```
+   Then open `http://localhost:8501` in your browser.
+
+For CLI usage with Docker, or Linux specific configurations, please see the [User Guide](docs/USER_GUIDE.md).
+
+## Usage (Local Python)
+
+If you prefer not to use Docker:
 
 1. **Start LM Studio**: Load your model and start the server on port `1234`.
 2. **Prepare Data**: Place your `.xlsx` files in `app/data/`. Ensure they have the configured target column (default: "Descrizione").

@@ -4,10 +4,12 @@ This guide provides detailed instructions on how to set up, configure, and run t
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
-2. [Installation](#installation)
-3. [Configuration](#configuration)
-4. [Running the Classification](#running-the-classification)
-5. [Troubleshooting](#troubleshooting)
+2. [Setting Up LM Studio](#setting-up-lm-studio)
+3. [Installation](#installation)
+4. [Configuration](#configuration)
+5. [Running with Docker Compose](#running-with-docker-compose)
+6. [Running the Classification (Locally)](#running-the-classification-locally)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -72,7 +74,30 @@ The system is controlled via `app/src/config.yaml`. You can modify this file to 
 
 ---
 
-## 5. Running the Classification
+## 5. Running with Docker Compose
+
+Using Docker Compose is the easiest way to run the application, as it automatically builds the image, mounts the necessary directories, and configures the environment.
+
+### Running the GUI
+
+To build and run the Streamlit GUI:
+```bash
+docker-compose up --build
+```
+Once the container starts, open your browser and navigate to `http://localhost:8501`.
+
+> **Note for Linux Users**: By default, the `docker-compose.yml` is configured for Docker Desktop (Mac/Windows) which supports `host.docker.internal` to reach LM Studio. If you are on Linux, you must uncomment the `extra_hosts` section in the `docker-compose.yml` file before running the command.
+
+### Running the CLI
+
+If you prefer to run the command-line classification instead of the GUI, you can execute the main script inside the container:
+```bash
+docker-compose run --rm perk-a-cola python app/src/main.py
+```
+
+---
+
+## 6. Running the Classification (Locally)
 
 1. **Prepare Data**:
    - Save your Excel file (e.g., `data.xlsx`) in the `app/data/` folder.
@@ -98,7 +123,7 @@ The system is controlled via `app/src/config.yaml`. You can modify this file to 
 
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
