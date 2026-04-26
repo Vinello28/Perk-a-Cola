@@ -1,26 +1,25 @@
 """
 Data reader module for the classification pipeline.
 
-Handles reading Excel files and extracting the target column
+Handles reading Excel and CSV files and extracting the target column
 for classification.
 """
 
 import logging
 from pathlib import Path
-
-import openpyxl
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 
 def read_descriptions(file_path: str | Path, column_name: str) -> list[str]:
     """
-    Read descriptions from an Excel file.
+    Read descriptions from an Excel or CSV file.
 
     Parameters
     ----------
     file_path : str | Path
-        Path to the ``.xlsx`` file.
+        Path to the file.
     column_name : str
         Name of the column to extract (must match header exactly).
 
@@ -40,27 +39,19 @@ def read_descriptions(file_path: str | Path, column_name: str) -> list[str]:
     if not file_path.exists():
         raise FileNotFoundError(f"Input file not found: {file_path}")
 
-    wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
-    ws = wb.active
+    if file_path.suffix.lower() == '.csv':
+        df = pd.read_csv(file_path)
+    else:
+        df = pd.read_excel(file_path)
 
-    # --- Locate the target column index ---
-    headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-    try:
-        col_idx = headers.index(column_name)
-    except ValueError:
-        wb.close()
+    if column_name not in df.columns:
         raise ValueError(
             f"Column '{column_name}' not found. "
-            f"Available columns: {headers}"
+            f"Available columns: {list(df.columns)}"
         )
+        
+    descriptions = df[column_name].fillna("").astype(str).tolist()
 
-    # --- Extract descriptions ---
-    descriptions: list[str] = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        value = row[col_idx] if col_idx < len(row) else None
-        descriptions.append(str(value).strip() if value is not None else "")
-
-    wb.close()
     logger.info(
         "Loaded %d descriptions from '%s' (column: '%s')",
         len(descriptions),

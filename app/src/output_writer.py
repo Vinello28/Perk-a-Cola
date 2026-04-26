@@ -1,14 +1,13 @@
 """
 Output writer module for the classification pipeline.
 
-Writes classification results to an Excel file with
+Writes classification results to an Excel or CSV file with
 ``Descrizione`` and ``Label`` columns.
 """
 
 import logging
 from pathlib import Path
-
-import openpyxl
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ def write_results(
     output_path: str | Path,
 ) -> Path:
     """
-    Write classified results to an Excel file.
+    Write classified results to an Excel or CSV file.
 
     Parameters
     ----------
@@ -28,7 +27,7 @@ def write_results(
     labels : list[str]
         Predicted labels (must be same length as ``descriptions``).
     output_path : str | Path
-        Destination ``.xlsx`` file path.
+        Destination file path.
 
     Returns
     -------
@@ -49,19 +48,12 @@ def write_results(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Classificazione"
-
-    # Header row
-    ws.append(["Descrizione", "Label"])
-
-    # Data rows
-    for desc, label in zip(descriptions, labels):
-        ws.append([desc, label])
-
-    wb.save(output_path)
-    wb.close()
+    df = pd.DataFrame({"Descrizione": descriptions, "Label": labels})
+    
+    if output_path.suffix.lower() == '.csv':
+        df.to_csv(output_path, index=False)
+    else:
+        df.to_excel(output_path, index=False, sheet_name="Classificazione")
 
     logger.info(
         "Results written to '%s' (%d rows)", output_path, len(descriptions)
