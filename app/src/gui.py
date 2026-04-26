@@ -172,26 +172,32 @@ st.markdown("""
     /* Header */
     .app-header {
         text-align: center;
-        padding: 1rem 0 2rem;
+        padding: 2rem 0 3rem;
+        background: radial-gradient(circle at center, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
     }
     .app-header h1 {
-        background: linear-gradient(135deg, #c084fc, #7c3aed, #a78bfa);
+        background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #7c3aed 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 0.3rem;
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 0.5rem;
+        filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.4));
     }
     .app-header p {
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 1rem;
+        color: #a78bfa;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        opacity: 0.8;
     }
 
     /* Sidebar section titles */
     .sidebar-section {
         font-size: 0.75rem;
         font-weight: 600;
-        color: rgba(139, 92, 246, 0.8);
+        color: rgba(167, 139, 250, 0.9);
         text-transform: uppercase;
         letter-spacing: 0.1em;
         margin: 1.5rem 0 0.5rem;
@@ -206,27 +212,37 @@ st.markdown("""
         border-radius: 9999px;
         font-size: 0.8rem;
         font-weight: 600;
+        backdrop-filter: blur(5px);
     }
     .status-ready {
-        background: rgba(34, 197, 94, 0.15);
+        background: rgba(34, 197, 94, 0.1);
         color: #4ade80;
         border: 1px solid rgba(34, 197, 94, 0.3);
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
     }
     .status-running {
-        background: rgba(234, 179, 8, 0.15);
+        background: rgba(234, 179, 8, 0.1);
         color: #facc15;
         border: 1px solid rgba(234, 179, 8, 0.3);
+        box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
     }
     .status-done {
-        background: rgba(139, 92, 246, 0.15);
+        background: rgba(139, 92, 246, 0.1);
         color: #a78bfa;
         border: 1px solid rgba(139, 92, 246, 0.3);
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
     }
 
     /* Progress bar override */
     .stProgress > div > div {
-        background: linear-gradient(90deg, #7c3aed, #a78bfa) !important;
+        background: linear-gradient(90deg, #7c3aed, #a78bfa, #7c3aed) !important;
+        background-size: 200% 100% !important;
+        animation: progress-glow 2s linear infinite !important;
         border-radius: 6px;
+    }
+    @keyframes progress-glow {
+        0% { background-position: 200% 0; }
+        100% { background-position: 0 0; }
     }
 
     /* Hide default streamlit branding */
@@ -237,12 +253,123 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# ── UI Enhancements ──────────────────────────────────────────────────
+
+# Floating Toggle & GitHub Link (Injected into parent DOM)
+st.components.v1.html(
+    """
+    <script>
+        (function() {
+            const parentDoc = window.parent.document;
+            
+            // Avoid duplicate injection
+            if (parentDoc.getElementById('perk-ui-controls')) return;
+
+            const container = parentDoc.createElement('div');
+            container.id = 'perk-ui-controls';
+            parentDoc.body.appendChild(container);
+
+            const style = parentDoc.createElement('style');
+            style.innerHTML = `
+                .perk-floating-btn {
+                    position: fixed;
+                    z-index: 999999;
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    border: 1px solid rgba(139, 92, 246, 0.4);
+                }
+                
+                #perk-sidebar-toggle {
+                    top: 20px;
+                    left: 20px;
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 14px;
+                    background: rgba(15, 12, 41, 0.8);
+                    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4), inset 0 0 10px rgba(124, 58, 237, 0.2);
+                    color: #fff;
+                    font-size: 24px;
+                }
+                #perk-sidebar-toggle:hover {
+                    transform: scale(1.15) rotate(10deg);
+                    background: rgba(124, 58, 237, 0.4);
+                    border-color: #a78bfa;
+                    box-shadow: 0 0 35px rgba(124, 58, 237, 0.7);
+                }
+
+                #perk-gh-link {
+                    top: 20px;
+                    right: 20px;
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 50%;
+                    background: rgba(15, 12, 41, 0.6);
+                    color: rgba(255, 255, 255, 0.8);
+                    text-decoration: none;
+                    border-color: rgba(255, 255, 255, 0.1);
+                }
+                #perk-gh-link:hover {
+                    transform: translateY(-3px) scale(1.1);
+                    background: rgba(255, 255, 255, 0.15);
+                    color: #fff;
+                    border-color: rgba(255, 255, 255, 0.5);
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+                }
+                
+                @media (max-width: 768px) {
+                    #perk-sidebar-toggle { width: 40px; height: 40px; top: 15px; left: 15px; }
+                    #perk-gh-link { width: 36px; height: 36px; top: 15px; right: 15px; }
+                }
+            `;
+            parentDoc.head.appendChild(style);
+
+            // Toggle Button Logic
+            const toggle = parentDoc.createElement('div');
+            toggle.id = 'perk-sidebar-toggle';
+            toggle.className = 'perk-floating-btn';
+            toggle.innerHTML = '🧪';
+            toggle.title = 'Espandi/Riduci Sidebar';
+            toggle.onclick = function() {
+                // Selector for Streamlit 1.30+
+                const expandBtn = parentDoc.querySelector('[data-testid="stSidebarCollapsedControl"]');
+                const sidebar = parentDoc.querySelector('section[data-testid="stSidebar"]');
+                
+                if (expandBtn) {
+                    expandBtn.click();
+                } else if (sidebar) {
+                    // Try to find the close button inside sidebar if open
+                    const closeBtn = sidebar.querySelector('button');
+                    if (closeBtn) closeBtn.click();
+                }
+            };
+            container.appendChild(toggle);
+
+            // GitHub Link
+            const gh = parentDoc.createElement('a');
+            gh.id = 'perk-gh-link';
+            gh.className = 'perk-floating-btn';
+            gh.href = 'https://github.com/Vinello28';
+            gh.target = '_blank';
+            gh.title = 'Profilo GitHub @Vinello28';
+            gh.innerHTML = '<svg height="24" width="24" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>';
+            container.appendChild(gh);
+        })();
+    </script>
+    """,
+    height=0,
+)
+
 # ── Header ───────────────────────────────────────────────────────────
 
 st.markdown("""
 <div class="app-header">
     <h1>🧪 Perk-a-Cola</h1>
-    <p>LLM-powered text classification pipeline</p>
+    <p>LLM Text Classifier</p>
 </div>
 """, unsafe_allow_html=True)
 
