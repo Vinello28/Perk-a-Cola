@@ -14,7 +14,7 @@ Perk-a-Cola is a modular, high-performance classification system designed to pro
 
 ## Key Features
 
-- 🔒 **Privacy First**: Runs entirely local using LM Studio (tested with Qwen3-4B).
+- 🔒 **Privacy First**: Runs entirely local using LM Studio (tested with Ministral3-3B).
 - ⚡ **High Performance**: Asynchronous concurrency handles 10,000+ rows efficiently.
 - 🧩 **Modular Architecture**: 
   - **Strategy Pattern** for interchangeable classifiers.
